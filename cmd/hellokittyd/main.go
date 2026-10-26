@@ -35,8 +35,8 @@ import (
 )
 
 var (
-	addr       = flag.String("addr", ":23560", "plain HTTP listen address (behind the TLS terminator)")
-	healthAddr = flag.String("health-addr", ":23561", "health listen address")
+	addr       = flag.String("addr", ":23600", "plain HTTP listen address (behind the TLS terminator)")
+	healthAddr = flag.String("health-addr", ":23601", "health listen address")
 	dataDir    = flag.String("data", "./data", "directory for kept uploads and save blobs")
 	settings   = flag.String("settings", "", "servers/settings JSON to serve instead of the built-in one")
 	codeTTL    = flag.Duration("code-ttl", 5*time.Minute, "how long an allocated invite code stays resolvable")

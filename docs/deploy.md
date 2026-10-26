@@ -3,7 +3,7 @@
 ## Running it
 
 ```
-go run ./cmd/hellokittyd                                  # plain HTTP on :23560, health on :23561
+go run ./cmd/hellokittyd                                  # plain HTTP on :23600, health on :23601
 go run ./cmd/hellokittyd -settings ./settings.json -data ./data
 ```
 
@@ -25,5 +25,5 @@ terminated in front (Traefik); the service only speaks plain HTTP.
 ## Container
 
 The Dockerfile builds a static `hellokittyd` (`CGO_ENABLED=0`, `-trimpath`) into a
-`gcr.io/distroless/static` image that runs as `nonroot:nonroot`, with `EXPOSE 23560 23561`
+`gcr.io/distroless/static` image that runs as `nonroot:nonroot`, with `EXPOSE 23600 23601`
 and `-data /data`.
