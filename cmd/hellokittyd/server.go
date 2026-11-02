@@ -18,7 +18,7 @@ import (
 )
 
 // sunblinkHosts is the first-party surface measured in the Switch build's
-// managed metadata (docs/provenance.md). Paths only — the stage each
+// managed metadata (docs/protocol.md, Sources). Paths only — the stage each
 // deployment serves under (/live on the first, /prod on the rest) is
 // stripped before routing.
 var sunblinkHosts = map[string]bool{

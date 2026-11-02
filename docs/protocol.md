@@ -2,7 +2,7 @@
 
 Read from the Switch executable's managed metadata (Hello Kitty Island
 Adventure `010027901C89C000`, base v0 US, Unity 2021.3.43f1 IL2CPP), see
-[provenance](provenance.md). Keep this file in step with `cmd/hellokittyd`.
+see Sources below. Keep this file in step with `cmd/hellokittyd`.
 
 Wire facts come only from the RECON capture notes
 (`scratch/decompile-hello-kitty-island-adventure/RECON.md`,
@@ -71,3 +71,43 @@ appear in managed metadata: auth is Sunblink account + tokens.
 The game is 2-player visit-a-friend: the host allocates a code in the
 in-game Multiplayer app, the guest resolves it. Same platform, same
 version, minutes-long code expiry. Nothing here simulates the game.
+
+## Design choices
+
+- One process answers all four first-party deployments because the path-to-host mapping is
+  unknown; splitting comes after open question 3.
+- Invite codes live in memory with a TTL: the observed shape is a minutes-long rendezvous, not
+  accounts or lobbies.
+- Save blobs are kept whole, not parsed: the format is unknown and a save is the player's data,
+  so get returns exactly what upload received.
+- Photon (`openpak/photon`) and UGS (`openpak/ugs`) are reused, not reimplemented; this repo only
+  reports their reachability in `/healthz` until resolve answers must carry room/relay pointers.
+- `platforms/switch/games/sunblink` is the doc-only study this server grew out of.
+
+## Open questions
+
+Nothing has been captured yet; every response shape is provisional. Needed:
+
+1. A boot capture in Harbor with OpenPak DNS: resolution order of the four Sunblink/AWS hosts and
+   UGS hosts at title screen vs Multiplayer app vs host code vs guest join, and which ports open.
+2. TLS-stub results for the Sunblink hosts (SNI, ALPN, pinning).
+3. Which `execute-api` deployment serves `invitecode/*` vs `savegames/*` (traffic, or
+   `*WithHttpInfo` call-site disassembly).
+4. The Photon AppId and region (runtime `servers/settings` response or
+   `PhotonInviteServiceSettings` defaults).
+
+## Sources
+
+Clean room: only the owner's own game client was examined (base v0 US dump, static recon); no
+server code of the developer was seen or used.
+
+- Title `010027901C89C000`, Program NCA SDK 18.3.3.0, Unity 2021.3.43f1 IL2CPP, 23 MB
+  `global-metadata.dat`: NSP/NCA headers and the Unity version string.
+- Four first-party base URLs with `/live` and `/prod` stages, REST paths, Sunblink assemblies,
+  Photon Realtime (no hardcoded AppId, `PhotonHostRpcTransport`, `wss://{0}:{1}`), Unity Netcode,
+  UGS DLLs/hosts and project id, S3/CloudFront content paths, the session model and the verdict
+  that it is not NEX/NPLN, PlayFab, EOS or Demonware: managed metadata and string extraction.
+- Auth is Sunblink account + tokens (`AccessToken`/`RefreshToken`); no Nintendo dauth strings.
+- OS services including `ldn:u` local wireless: `main.npdm`.
+- 2-player visit-a-friend, minutes-long codes: public wiki via `sunblink/docs/design.md` section 2
+  (leads only, not wire facts).

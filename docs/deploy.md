@@ -27,3 +27,8 @@ terminated in front (Traefik); the service only speaks plain HTTP.
 The Dockerfile builds a static `hellokittyd` (`CGO_ENABLED=0`, `-trimpath`) into a
 `gcr.io/distroless/static` image that runs as `nonroot:nonroot`, with `EXPOSE 23600 23601`
 and `-data /data`.
+
+## Capturing real sessions
+
+Unknown routes log their body and answer `{}`, uploads are kept under `-data`, and `-settings`
+serves a captured `servers/settings` verbatim, so a real session is easy to capture.
