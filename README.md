@@ -43,7 +43,6 @@ go run ./cmd/hellokittyd
 - [Notes](docs/notes.md)
 - [Ports](docs/ports.md)
 - [Provenance](docs/provenance.md)
-- [Sunblink promotion plan](docs/sunblink-promotion.md)
 
 Live compatibility status: [openpak.org/titles#t-72360](https://openpak.org/titles#t-72360).
 

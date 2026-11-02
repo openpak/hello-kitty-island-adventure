@@ -1,6 +1,6 @@
 # Evidence: hello-kitty-island-adventure
 
-## Confirmed
+## Static recon
 
 - Static RECON of the owner's base v0 US dump only (see
   [provenance](provenance.md)). No traffic has been captured yet.
@@ -15,7 +15,3 @@
    (path-to-host mapping: traffic or `*WithHttpInfo` call-site disassembly).
 4. The Photon AppId/region (runtime `servers/settings` response or
    `PhotonInviteServiceSettings` defaults).
-
-## Test results
-
-Nothing recorded yet.

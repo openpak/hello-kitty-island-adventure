@@ -1,13 +1,12 @@
 # Notes: hello-kitty-island-adventure
 
-## Status
+## Capture support
 
-Not deployed and not yet tested against the game. The host and path facts
-in [protocol.md](protocol.md) were read from the Switch executable's
-managed metadata; every response shape is provisional until a capture of a
-real session confirms it. The service is built to make that capture easy:
-unknown routes log their body and answer `{}`, uploads are kept under
-`-data`, and `-settings` serves a captured `servers/settings` verbatim.
+The host and path facts in [protocol.md](protocol.md) were read from the Switch executable's
+managed metadata; every response shape is provisional until a capture of a real session
+confirms it. The service is built to make that capture easy: unknown routes log their body
+and answer `{}`, uploads are kept under `-data`, and `-settings` serves a captured
+`servers/settings` verbatim.
 
 ## Why this shape
 
@@ -27,5 +26,4 @@ unknown routes log their body and answer `{}`, uploads are kept under
 ## Relation to sunblink/
 
 `platforms/switch/games/sunblink` is the doc-only study this server grew
-out of. See [sunblink-promotion.md](sunblink-promotion.md) for the plan to
-promote it once this repo is live.
+out of.
