@@ -29,17 +29,14 @@ var sunblinkHosts = map[string]bool{
 }
 
 type server struct {
-	dataDir  string
+	db       store
 	settings json.RawMessage
 	invites  *inviteStore
 	photon   *middleware
 	ugs      *middleware
 }
 
-func newServer(dataDir, settingsFile string, ttl time.Duration) (*server, error) {
-	if err := os.MkdirAll(dataDir, 0o755); err != nil {
-		return nil, err
-	}
+func newServer(db store, settingsFile string, ttl time.Duration) (*server, error) {
 	settings := builtinSettings()
 	if settingsFile != "" {
 		raw, err := os.ReadFile(settingsFile)
@@ -52,9 +49,9 @@ func newServer(dataDir, settingsFile string, ttl time.Duration) (*server, error)
 		settings = raw
 	}
 	return &server{
-		dataDir:  dataDir,
+		db:       db,
 		settings: settings,
-		invites:  newInviteStore(ttl),
+		invites:  newInviteStore(db, ttl),
 		photon:   newMiddleware("photon", envOr("PHOTON_URL", "http://127.0.0.1:8080")),
 		ugs:      newMiddleware("ugs", envOr("UGS_URL", "http://127.0.0.1:22681")),
 	}, nil

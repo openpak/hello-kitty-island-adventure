@@ -8,12 +8,12 @@ package main
 // read and the answers stay minimal. See docs/protocol.md.
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -22,14 +22,14 @@ type invite struct {
 	expires time.Time
 }
 
+// inviteStore hands out codes; the codes and their expiry live in the store (Postgres).
 type inviteStore struct {
-	mu    sync.Mutex
-	ttl   time.Duration
-	codes map[string]invite
+	db  store
+	ttl time.Duration
 }
 
-func newInviteStore(ttl time.Duration) *inviteStore {
-	return &inviteStore{ttl: ttl, codes: map[string]invite{}}
+func newInviteStore(db store, ttl time.Duration) *inviteStore {
+	return &inviteStore{db: db, ttl: ttl}
 }
 
 const codeAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -45,45 +45,39 @@ func newCode() string {
 	return string(b[:])
 }
 
-func (st *inviteStore) allocate(hostTag string) (string, time.Time) {
-	st.mu.Lock()
-	defer st.mu.Unlock()
-	st.sweepLocked()
+func normCode(code string) string { return strings.ToUpper(strings.TrimSpace(code)) }
+
+func dbCtx() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 5*time.Second)
+}
+
+func (st *inviteStore) allocate(hostTag string) (string, time.Time, error) {
+	ctx, cancel := dbCtx()
+	defer cancel()
 	for {
 		code := newCode()
-		if _, taken := st.codes[code]; taken {
-			continue
-		}
 		exp := time.Now().Add(st.ttl)
-		st.codes[code] = invite{hostTag: hostTag, expires: exp}
-		return code, exp
-	}
-}
-
-func (st *inviteStore) resolve(code string) (invite, bool) {
-	st.mu.Lock()
-	defer st.mu.Unlock()
-	inv, ok := st.codes[strings.ToUpper(strings.TrimSpace(code))]
-	if !ok || time.Now().After(inv.expires) {
-		delete(st.codes, strings.ToUpper(strings.TrimSpace(code)))
-		return invite{}, false
-	}
-	return inv, true
-}
-
-func (st *inviteStore) dispose(code string) {
-	st.mu.Lock()
-	defer st.mu.Unlock()
-	delete(st.codes, strings.ToUpper(strings.TrimSpace(code)))
-}
-
-func (st *inviteStore) sweepLocked() {
-	now := time.Now()
-	for code, inv := range st.codes {
-		if now.After(inv.expires) {
-			delete(st.codes, code)
+		ok, err := st.db.putInvite(ctx, code, hostTag, exp)
+		if err != nil {
+			return "", time.Time{}, err
+		}
+		if ok {
+			return code, exp, nil
 		}
 	}
+}
+
+func (st *inviteStore) resolve(code string) (invite, bool, error) {
+	ctx, cancel := dbCtx()
+	defer cancel()
+	host, exp, ok, err := st.db.getInvite(ctx, normCode(code))
+	return invite{hostTag: host, expires: exp}, ok, err
+}
+
+func (st *inviteStore) dispose(code string) error {
+	ctx, cancel := dbCtx()
+	defer cancel()
+	return st.db.delInvite(ctx, normCode(code))
 }
 
 // inviteCode reads the code from wherever the client put it: query names
@@ -114,7 +108,12 @@ func bearerTag(r *http.Request) string {
 }
 
 func (s *server) inviteAllocate(w http.ResponseWriter, r *http.Request, body []byte) {
-	code, exp := s.invites.allocate(bearerTag(r))
+	code, exp, err := s.invites.allocate(bearerTag(r))
+	if err != nil {
+		log.Printf("[hellokitty] invite allocate failed: %v", err)
+		http.Error(w, "storage unavailable", http.StatusInternalServerError)
+		return
+	}
 	log.Printf("[hellokitty] invite allocate -> %s ttl=%s", code, time.Until(exp).Round(time.Second))
 	writeJSON(w, http.StatusOK, map[string]any{
 		"code":      code,
@@ -124,7 +123,12 @@ func (s *server) inviteAllocate(w http.ResponseWriter, r *http.Request, body []b
 
 func (s *server) inviteResolve(w http.ResponseWriter, r *http.Request, body []byte) {
 	code := inviteCode(r, body)
-	inv, ok := s.invites.resolve(code)
+	inv, ok, err := s.invites.resolve(code)
+	if err != nil {
+		log.Printf("[hellokitty] invite resolve failed: %v", err)
+		http.Error(w, "storage unavailable", http.StatusInternalServerError)
+		return
+	}
 	log.Printf("[hellokitty] invite resolve %s -> found=%t", tag(code), ok)
 	if !ok {
 		writeJSON(w, http.StatusNotFound, map[string]any{"found": false})
@@ -139,7 +143,11 @@ func (s *server) inviteResolve(w http.ResponseWriter, r *http.Request, body []by
 
 func (s *server) inviteDispose(w http.ResponseWriter, r *http.Request, body []byte) {
 	code := inviteCode(r, body)
-	s.invites.dispose(code)
+	if err := s.invites.dispose(code); err != nil {
+		log.Printf("[hellokitty] invite dispose failed: %v", err)
+		http.Error(w, "storage unavailable", http.StatusInternalServerError)
+		return
+	}
 	log.Printf("[hellokitty] invite dispose %s", tag(code))
 	writeJSON(w, http.StatusOK, map[string]any{})
 }

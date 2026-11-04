@@ -11,7 +11,7 @@ import (
 
 func testServer(t *testing.T) *server {
 	t.Helper()
-	s, err := newServer(t.TempDir(), "", time.Minute)
+	s, err := newServer(newMemStore(), "", time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestInviteRoundTrip(t *testing.T) {
 }
 
 func TestInviteCodesExpire(t *testing.T) {
-	s, err := newServer(t.TempDir(), "", time.Millisecond)
+	s, err := newServer(newMemStore(), "", time.Millisecond)
 	if err != nil {
 		t.Fatal(err)
 	}

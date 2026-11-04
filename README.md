@@ -28,7 +28,8 @@ go run ./cmd/hellokittyd
 
 | Flag / env | Meaning |
 | --- | --- |
-| `-data` | directory for kept uploads and save blobs (default `./data`) |
+| `-data` | unused (kept for old unit files); invite codes and saves live in Postgres |
+| `HELLOKITTY_DATABASE_URL` | required: Postgres for invite codes (with their TTL) and cloud saves |
 | `-settings` | a `servers/settings` JSON to serve instead of the built-in one |
 | `-code-ttl` | how long an allocated invite code stays resolvable (default `5m`) |
 | `HKIA_PHOTON_APPID` / `HKIA_PHOTON_REGION` | Photon pointers served in the built-in settings |

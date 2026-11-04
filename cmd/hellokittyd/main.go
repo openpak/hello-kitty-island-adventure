@@ -8,7 +8,7 @@
 // (served by platforms/switch/games/ugs); this service is only the
 // developer's small HTTPS API the client calls around it:
 //
-//	invitecode/allocate|dispose|resolve   2-player invite-code rendezvous
+//	invitecode/allocate|dispose|resolve   2-player invite-code rendezvous (Postgres)
 //	savegames/delete|get|query|upload     cloud saves
 //	servers/settings                      boot config (Photon AppId/region, Relay)
 //	support/claim-save-data|offer-save-data|send-device-logs
@@ -26,6 +26,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -37,7 +38,7 @@ import (
 var (
 	addr       = flag.String("addr", ":23600", "plain HTTP listen address (behind the TLS terminator)")
 	healthAddr = flag.String("health-addr", ":23601", "health listen address")
-	dataDir    = flag.String("data", "./data", "directory for kept uploads and save blobs")
+	_          = flag.String("data", "", "unused: invite codes and saves live in Postgres (HELLOKITTY_DATABASE_URL)")
 	settings   = flag.String("settings", "", "servers/settings JSON to serve instead of the built-in one")
 	codeTTL    = flag.Duration("code-ttl", 5*time.Minute, "how long an allocated invite code stays resolvable")
 )
@@ -51,7 +52,15 @@ func envOr(key, def string) string {
 
 func main() {
 	flag.Parse()
-	s, err := newServer(*dataDir, *settings, *codeTTL)
+	url := os.Getenv("HELLOKITTY_DATABASE_URL")
+	if url == "" {
+		log.Fatal("HELLOKITTY_DATABASE_URL is required: invite codes and cloud saves are kept in Postgres")
+	}
+	db, err := openStore(context.Background(), url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	s, err := newServer(db, *settings, *codeTTL)
 	if err != nil {
 		log.Fatal(err)
 	}

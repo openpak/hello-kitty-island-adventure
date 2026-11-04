@@ -4,12 +4,13 @@
 
 ```
 go run ./cmd/hellokittyd                                  # plain HTTP on :23600, health on :23601
-go run ./cmd/hellokittyd -settings ./settings.json -data ./data
+HELLOKITTY_DATABASE_URL=postgres://... go run ./cmd/hellokittyd -settings ./settings.json
 ```
 
 | Flag / env | Meaning |
 | --- | --- |
-| `-data` | directory for kept uploads and save blobs (default `./data`) |
+| `-data` | unused (kept for old unit files); invite codes and saves live in Postgres |
+| `HELLOKITTY_DATABASE_URL` | required: Postgres for invite codes (with their TTL) and cloud saves |
 | `-settings` | a `servers/settings` JSON to serve instead of the built-in one |
 | `-code-ttl` | invite-code lifetime (default `5m`) |
 | `HKIA_PHOTON_APPID` / `HKIA_PHOTON_REGION` | Photon pointers in the built-in settings |
@@ -30,5 +31,5 @@ and `-data /data`.
 
 ## Capturing real sessions
 
-Unknown routes log their body and answer `{}`, uploads are kept under `-data`, and `-settings`
+Unknown routes log their body and answer `{}`, uploads are kept in Postgres, and `-settings`
 serves a captured `servers/settings` verbatim, so a real session is easy to capture.
