@@ -1,6 +1,6 @@
 # Changelog — hello-kitty-island-adventure
 
-## v0.1.0 — unreleased
+## v0.1.0 — 2026-11-04
 
 - `hellokittyd`: the client's first-party Sunblink REST API on the three AWS
   API-Gateway deployments and `minsc.sunblink.io`. Invite-code rendezvous
