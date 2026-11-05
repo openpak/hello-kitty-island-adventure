@@ -1,5 +1,9 @@
 # Changelog — hello-kitty-island-adventure
 
+## v0.2.2 — 2026-11-05
+
+- docs: `docs/erasure.md` records why account erasure (openpak/prds#120) is not implemented: `hk_saves` and `hk_invites` are keyed by a per-process hash of an unvalidated Sunblink bearer, so nothing ties them to an OpenPak account. No code change.
+
 ## v0.2.1 — 2026-11-04
 
 - Release workflow: tags publish ghcr.io/openpak/<repo> for amd64 and arm64 (same as the sibling game servers). No code change.
